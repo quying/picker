@@ -35,6 +35,23 @@ export default class Cascader extends Component {
 		}
 	}
 
+	getValue(d, val) {
+		let data = d || this.props.data;
+		let value = val || this.props.value;
+		//无指定value时默认选中第一项
+		if (!value || !value.length) {
+	      	value = [];
+	      	for (let i = 0; i < this.props.cols; i++) {
+	        	if (data && data.length) {
+	          		value[i] = data[0].value;
+	         		data = data[0].children;
+
+	        	}
+	      	}
+	    }
+		return value;
+	}
+
 	onValueChange(value, index) {
 		const children = arrayTreeFilter(this.props.data, (item, level) => {
 			return level <= index && item.value === value[level];
@@ -55,36 +72,19 @@ export default class Cascader extends Component {
 		if(this.props.onChange) {
 			this.props.onChange(value);
 		}
-
-	}
-
-	getValue(d, val) {
-		let data = d || this.props.data;
-		let value = val || this.props.value;
-
-		if (!value || !value.length) {
-	      	value = [];
-	      	for (let i = 0; i < this.props.cols; i++) {
-	        	if (data && data.length) {
-	          		value[i] = data[0].value;
-	         		data = data[0].children;
-
-	        	}
-	      	}
-	    }
-		return value;
 	}
 
 	getCols() {
 		const { data, cols } = this.props;
 		const value = this.state.value;
+		//根据value获取的节点数组
 		const childrenTree = arrayTreeFilter(data, (item, level)=>{
 			return item.value === value[level];
 		}).map(item => item.children);
 	     
 	    childrenTree.length = cols - 1;
 	    childrenTree.unshift(data);
-	    
+	    // console.log(childrenTree)
 	    return childrenTree.map((children=[], level) => (
 			<Picker key={ level } style={{ flex: 1 }}>
 			{children.map(item =>

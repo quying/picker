@@ -27,6 +27,8 @@ export default class Picker extends Component {
             selectedValue: this.getSelectedValue()
         };
 
+        this.scrollingComplete = this.scrollingComplete.bind(this)
+
     }
     
     //默认选中值
@@ -70,9 +72,10 @@ export default class Picker extends Component {
             /** Callback that is fired on the later of touch end or deceleration end,
                 provided that another scrolling action has not begun. Used to know
                 when to fade out a scrollbar. */
-            scrollingComplete: this.scrollingComplete.bind(this),
+            scrollingComplete: this.scrollingComplete,
         });
         this.zscroller.setDisabled(this.props.disabled);
+        // Setup snap dimensions (only needed when snapping is enabled)
         this.zscroller.scroller.setSnapSize(0, itemHeight);
         this.select(this.state.selectedValue);
     }
@@ -100,32 +103,6 @@ export default class Picker extends Component {
         this.zscroller.destroy();
     }
 
-    scrollTo(top) {
-        this.zscroller.scroller.scrollTo(0, top);
-    }
-
-    //选中项改变时调用
-    fireValueChange(selectedValue) {
-        if (selectedValue !== this.state.selectedValue) {
-            if (!('selectedValue' in this.props)) {
-                this.setState({
-                  selectedValue,
-                });
-            }
-            if (this.props.onValueChange) {
-                this.props.onValueChange(selectedValue);
-            }
-        }
-    }
-
-    scrollingComplete() {
-        const { top } = this.zscroller.scroller.getValues();
-
-        if (top >= 0) {
-          this.doScrollingComplete(top);  
-        }
-    }
-
     select(value) {
         const children = React.Children.toArray(this.props.children);
 
@@ -144,6 +121,19 @@ export default class Picker extends Component {
         }
         this.scrollTo(index * this.itemHeight);
     }
+
+    scrollTo(top) {
+        this.zscroller.scroller.scrollTo(0, top);
+    }
+    //zscroller scrollingComplete
+    scrollingComplete() {
+        const { top } = this.zscroller.scroller.getValues();
+
+        if (top >= 0) {
+          this.doScrollingComplete(top);  
+        }
+    }
+
     //计算应该选中的index
     doScrollingComplete(top) {
         let index = top / this.itemHeight;
@@ -155,14 +145,28 @@ export default class Picker extends Component {
         }
         const children = React.Children.toArray(this.props.children);
         index = Math.min(index, children.length - 1);
-        const child = children[index];
         //当前选中项
+        const child = children[index];
         if (child) {
             this.fireValueChange(child.props.value);
         } else if (console.warn) {
             console.warn('child not found', children, index);
         }
     }
+
+    fireValueChange(selectedValue) {
+        if (selectedValue !== this.state.selectedValue) {
+            if (!('selectedValue' in this.props)) {
+                this.setState({
+                  selectedValue,
+                });
+            }
+            if (this.props.onValueChange) {
+                this.props.onValueChange(selectedValue);
+            }
+        }
+    }
+
     //提供给其他组件调用的方法
     getValue() {
         if ('selectedValue' in this.props) {
@@ -173,7 +177,7 @@ export default class Picker extends Component {
     }
 
 	render () {
-        const { selectedValue, selectedClassName, onValueChange, children} = this.props;
+        const { selectedValue, selectedClassName, children} = this.props;
 
         const itemClassName = 'lm-ui-picker-item';
         const selectedItemClassName = `${itemClassName} lm-ui-picker-item-selected`;
